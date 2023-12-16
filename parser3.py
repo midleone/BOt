@@ -47,12 +47,10 @@ conn = engine.connect()
 
 posts = Table('posts', metadata, autoload_with=engine)
 
-# Выполняем запрос
 sql_query = select([func.max(posts.c.post_id).label('max_post_id')])
 result = conn.execute(sql_query).scalar()
 # max_post_id = cursor.execute("SELECT MAX(post_id) AS max_value FROM posts").scalar()
 
-# Закрываем соединение
 conn.close()
 
 print(f"Максимальное значение post_id: {max_post_id}")

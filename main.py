@@ -28,7 +28,6 @@ class VolunteerBot:
             connection = self.connect_to_db()
             cursor = connection.cursor()
 
-            # Create user_data table if not exists
             create_table_query = """
             CREATE TABLE IF NOT EXISTS user_data (
                 user_id BIGINT PRIMARY KEY,
