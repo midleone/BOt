@@ -1,5 +1,9 @@
+import random
+
 import telebot
 import psycopg2
+import random
+
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 
 class VolunteerBot:
@@ -72,6 +76,7 @@ class VolunteerBot:
         dp.add_handler(conv_handler)
         dp.add_handler(CommandHandler('delete_account', self.handle_delete_account))
         dp.add_handler(CommandHandler('register_event', self.handle_register_event))
+        dp.add_handler(MessageHandler(Filters.regex('.*'), self.process_event_registration))
 
         updater.start_polling()
         updater.idle()
@@ -151,10 +156,11 @@ class VolunteerBot:
         user_id = update.message.from_user.id
 
         if self.user_exists(user_id):
-            self.bot.send_message(user_id, "To register for an event, send the post number. Example: id123")
+            self.bot.send_message(user_id, "To register for an event, send the post number. Example: 123")
             return 'EVENT_REGISTRATION'
         else:
             self.bot.send_message(user_id, "You are not registered. Please register using /start.")
+
 
     def process_event_registration(self, update, context):
         user_id = update.message.from_user.id
@@ -182,9 +188,10 @@ class VolunteerBot:
             cursor.execute(create_applications_table_query)
 
             # Insert data
-            insert_query = "INSERT INTO applications (user_name, post_id) VALUES (%s, %s)"
-            user_name = f"{self.users[user_id]['first_name']} {self.users[user_id]['last_name']}"
-            cursor.execute(insert_query, (user_name, post_id))
+            insert_query = "INSERT INTO applications (id, user_name, post_id) VALUES (%s, %s, %s)"
+            user = self.get_user_by_id(user_id)
+            user_name = f"{user[1]} {user[2]}"
+            cursor.execute(insert_query, (random.randint(1, 100000000), user_name, post_id))
 
             connection.commit()
 
@@ -262,6 +269,25 @@ class VolunteerBot:
         finally:
             if connection:
                 connection.close()
+
+    def get_user_by_id(self, user_id):
+        try:
+            connection = self.connect_to_db()
+            cursor = connection.cursor()
+
+            # Check if the user exists in user_data table
+            check_user_query = "SELECT * FROM user_data WHERE user_id = %s"
+            cursor.execute(check_user_query, (user_id,))
+            return cursor.fetchone()
+
+        except Exception as e:
+            print(f"Error checking user existence: {e}")
+            return False
+
+        finally:
+            if connection:
+                connection.close()
+
 
 if __name__ == "__main__":
     TOKEN = '6954905060:AAFGmwHLcjBWnQlp4gH7mr5j0vxgfSpZ7fQ'
