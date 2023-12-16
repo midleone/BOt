@@ -1,7 +1,8 @@
 import psycopg2
 import requests
+import sqlite3
 from bs4 import BeautifulSoup
-
+from sqlalchemy import select, func
 from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 from sqlalchemy import create_engine, select, func, String
 from sqlalchemy import create_engine, Column, Integer, MetaData, Table, select, func
@@ -42,18 +43,27 @@ posts = Table('posts', metadata,
               Column('text', String(4096))
               )
 
-# Создаем соединение с базой данных
-conn = engine.connect()
+# # Создаем соединение с базой данных
+# conn = engine.connect()
+#
+# posts = Table('posts', metadata, autoload_with=engine)
+#
+# sql_query = select([func.max(posts.c.post_id).label('max_post_id')])
+# result = conn.execute(sql_query).scalar()
 
-posts = Table('posts', metadata, autoload_with=engine)
-
-sql_query = select([func.max(posts.c.post_id).label('max_post_id')])
-result = conn.execute(sql_query).scalar()
 # max_post_id = cursor.execute("SELECT MAX(post_id) AS max_value FROM posts").scalar()
+
+connection = sqlite3.connect('db_url')
+cursor = connection.cursor()
+
+# Execute a query to find the maximum post_id
+cursor.execute('SELECT MAX(post_id) FROM posts')
+max_post_id = cursor.fetchone()[0]
+
+print(f"Максимальное значение post_id: {max_post_id}")
 
 conn.close()
 
-print(f"Максимальное значение post_id: {max_post_id}")
 
 if __name__ == '__main__':
 
